@@ -1,16 +1,16 @@
 const express = require('express');
-const todoController = require('../controller/todoController');
+const userController = require('../controller/userController');
 
 const router = express.Router();
 
 router
   .route('/')
-  .post(todoController.createNewUser)
-  .get(todoController.getAllUsers);
+  .post(userController.createNewUser)
+  .get(userController.getAllUsers);
 router
   .route('/:id')
-  .get(todoController.getUser)
-  .patch(todoController.updateUser)
-  .delete(todoController.deleteUser);
+  .get(userController.getUser)
+  .patch(userController.updateUser)
+  .delete(userController.deleteUser);
 
 module.exports = router;
