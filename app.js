@@ -1,5 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
+const globalErrorHandler = require('./controllers/errorController');
 
 const app = express();
 
@@ -11,5 +12,7 @@ const userRouter = require('./routes/userRouter');
 
 app.use('/api', todoRouter);
 app.use('/api/user', userRouter);
+
+app.use(globalErrorHandler);
 
 module.exports = app;

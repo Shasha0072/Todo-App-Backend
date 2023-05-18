@@ -1,3 +1,4 @@
+/* eslint-disable no-empty */
 exports.getAllUsers = (req, res) => {
   try {
   } catch (err) {}
