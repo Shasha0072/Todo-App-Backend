@@ -21,7 +21,7 @@ const sendErrorProd = (err, res) => {
     // 1) Log Error
     console.error('Error', err);
 
-    //2) Send generate message
+    // 2) Send generate message
     res.status(500).json({
       status: 'error',
       message: 'Something went very wrong!',
@@ -45,7 +45,7 @@ const handleValidationErrorDB = (err) => {
   return new AppError(message, 400); // 400 stands for bad request
 };
 
-module.exports = (err, res, req, next) => {
+module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
