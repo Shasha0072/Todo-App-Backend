@@ -7,6 +7,7 @@ router
   .route('/')
   .post(todoController.createNewTask)
   .get(todoController.getAllTasks);
+
 router
   .route('/:id')
   .patch(todoController.updateTask)
