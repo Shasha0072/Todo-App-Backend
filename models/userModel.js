@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema(
         ref: 'Group',
       },
     ],
+    passwordChangedAt: Date,
     adminId: { type: String, default: null },
     createdAt: { type: Date },
     updatedAt: { type: Date },
@@ -49,6 +50,17 @@ userSchema.methods.correctPassword = async function (
   userPassword
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.changedPasswordAfter = async function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
 };
 
 userSchema.pre('save', async function (next) {
