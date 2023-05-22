@@ -2,11 +2,11 @@ const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
   const transpoter = nodemailer.createTransport({
-    host: '',
-    port: 45,
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
     auth: {
-      user: '',
-      pass: '',
+      user: process.env.EMAIL_USERNAME,
+      pass: process.env.EMAIL_PASSWORD,
     },
   });
 
