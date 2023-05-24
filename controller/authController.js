@@ -76,3 +76,24 @@ exports.protect = catchAsync(async (req, res, next) => {
   req.user = currentUser;
   next();
 });
+
+exports.forgetPassword = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+  // Get user with provided email
+  const user = await User.findOne({ email });
+  if (!user) return next(new AppError('User with this email doest exist', 401));
+  // TODO:
+  // 1. Generate a reset password token
+  // 2. Encrypt the reset token and Save in user document in resetPasswordToken
+  // 3. Also set Time till the token is valid in uer document as resetPasswordTokenTime (10 mins from now)
+  // 4. send the email to the user with reset link reset token as parameter
+});
+
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  // TODO:
+  // 1. Get the token from req.params.
+  // 2. Hash the token and find the user where reset Password token is same.
+  // 3. if not send error
+  // 4. check if the tokenexpired or not
+  // 5. change the password and passwordConfirm with the same from req.body
+});
