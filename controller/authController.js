@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const catchAsync = require('../utils/catchAsync');
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
+const sendEmail = require('../utils/email');
 
 const signToken = (id) =>
   jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -79,16 +80,41 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 exports.forgetPassword = catchAsync(async (req, res, next) => {
   const { email } = req.body;
-  // Get user with provided email
+
   const user = await User.findOne({ email });
   if (!user) return next(new AppError('User with this email doest exist', 401));
-  // TODO:
-  // 1. Generate a reset password token
-  //const resetToken =
 
-  // 2. Encrypt the reset token and Save in user document in resetPasswordToken
-  // 3. Also set Time till the token is valid in uer document as resetPasswordTokenTime (10 mins from now)
-  // 4. send the email to the user with reset link reset token as parameter
+  const resetToken = await user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  const resetURL = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/user/resetPassword/${resetToken}`;
+
+  const message = `Forget your password? Submit a PATCH request with your new password
+  and passwordConfirm to : ${resetURL}.\nIf you didn't forget your password, please ignore this email.`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Your Password reset token (valid for only 10 min)',
+      message,
+    });
+    res.status(200).json({
+      status: 'success',
+      message: 'Token sent to email',
+    });
+  } catch (err) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+    return next(
+      new AppError(
+        'There was an error sending the email. Please try again.',
+        500
+      )
+    );
+  }
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
