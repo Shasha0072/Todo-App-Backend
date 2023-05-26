@@ -1,5 +1,7 @@
 const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+
 const catchAsync = require('../utils/catchAsync');
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
@@ -9,6 +11,27 @@ const signToken = (id) =>
   jwt.sign({ id: id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
+
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  user.password = undefined;
+  res.cookie('jwt', token, cookieOptions);
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
+  });
+};
 
 exports.signup = catchAsync(async (req, res, next) => {
   const user = await User.create({
@@ -122,7 +145,19 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   // 1. Get the token from req.params.
   const { token } = req.params;
   // 2. Hash the token and find the user where reset Password token is same.
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
   // 3. if not send error
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+  if (!user) return next(new AppError('Token is invalid or has expired'), 400);
   // 4. check if the tokenexpired or not
   // 5. change the password and passwordConfirm with the same from req.body
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+  createSendToken(user, 200, res);
 });
